@@ -1,0 +1,123 @@
+classDiagram
+  direction LR
+
+  namespace venta {
+    class Sucursal {
+      -String nombre
+      -Clock reloj
+      -List~ObservadorDeVentas~ observadores
+      +suscribir(ObservadorDeVentas)
+      +desuscribir(ObservadorDeVentas)
+      +vender(Producto) Venta
+      -notificar(Venta)
+    }
+    class Venta {
+      <<record>>
+      String sucursal
+      Producto producto
+      BigDecimal importe
+      LocalDateTime fechaHora
+    }
+    class ObservadorDeVentas {
+      <<interface>>
+      +ventaRealizada(Venta)
+    }
+    class ContadorDeVentas {
+      -Clock reloj
+      -LocalDate dia
+      -int cantidad
+      +cantidadDelDia() int
+    }
+  }
+
+  namespace integracion {
+    class OficinaContable {
+      -URI endpointRegistroVentas
+    }
+    class Deposito {
+      -URI endpointPreparacion
+    }
+    class ClienteHttp {
+      <<interface>>
+      +postJson(URI, String)
+    }
+    class ClienteHttpJdk {
+      -HttpClient cliente
+    }
+    class Json {
+      <<utility>>
+      +objeto(Map) String
+    }
+    class IntegracionException {
+      <<exception>>
+    }
+  }
+
+  namespace producto {
+    class Producto {
+      -String codigo
+      -String nombre
+      -BigDecimal precioBase
+      +precioFinal() BigDecimal
+    }
+    class TipoProducto {
+      -String nombre
+      +agregarImpuesto(Impuesto)
+      +totalImpuestos(BigDecimal) BigDecimal
+    }
+    class RegimenImpositivo {
+      +vigente()$ RegimenImpositivo
+      +electronico() TipoProducto
+      +hogar() TipoProducto
+      +nuevoTipo(String, Impuesto...) TipoProducto
+    }
+  }
+
+  namespace impuesto {
+    class Impuesto {
+      <<interface>>
+      +nombre() String
+      +calcular(BigDecimal) BigDecimal
+    }
+    class IVA {
+      -BigDecimal alicuota
+      +actualizarAlicuota(BigDecimal)
+    }
+    class ImpuestoSobreGanancias {
+      <<abstract>>
+      -BigDecimal gananciasImpositivas
+      +actualizarGananciasImpositivas(BigDecimal)
+    }
+    class EO
+    class EI
+  }
+
+  %% Observer
+  Sucursal o--> "*" ObservadorDeVentas : notifica
+  Sucursal ..> Venta : crea
+  Venta --> Producto
+  ObservadorDeVentas <|.. ContadorDeVentas
+  ObservadorDeVentas <|.. OficinaContable
+  ObservadorDeVentas <|.. Deposito
+
+  %% Adapter + transporte
+  OficinaContable --> ClienteHttp
+  Deposito --> ClienteHttp
+  OficinaContable ..> Json
+  Deposito ..> Json
+  ClienteHttp <|.. ClienteHttpJdk
+  ClienteHttpJdk ..> IntegracionException : lanza
+
+  %% Strategy + composición: la categoría (TipoProducto) maneja los impuestos
+  Producto --> TipoProducto : categoría
+  TipoProducto o--> "1..*" Impuesto : IVA obligatorio
+  Impuesto <|.. IVA
+  Impuesto <|.. ImpuestoSobreGanancias
+  ImpuestoSobreGanancias <|-- EO
+  ImpuestoSobreGanancias <|-- EI
+
+  %% Factory
+  RegimenImpositivo --> IVA
+  RegimenImpositivo --> EO
+  RegimenImpositivo --> EI
+  RegimenImpositivo ..> TipoProducto : crea

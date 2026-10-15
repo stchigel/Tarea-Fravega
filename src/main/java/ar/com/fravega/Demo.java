@@ -10,7 +10,6 @@ import ar.com.fravega.venta.Sucursal;
 import java.math.BigDecimal;
 import java.net.URI;
 
-/** Ejemplo de uso. Los sistemas externos se simulan imprimiendo lo que se les enviaría. */
 public class Demo {
 
   public static void main(String[] args) {
@@ -29,9 +28,9 @@ public class Demo {
     System.out.println("Precio final TV: " + televisor.precioFinal());
     System.out.println("Precio final sillón: " + sillon.precioFinal());
 
-    System.out.println("Vendiendo TV...");
+    System.out.println("---Vender TV---");
     sucursal.vender(televisor);
-    System.out.println("Vendiendo sillón...");
+    System.out.println("---Vender sillón---");
     sucursal.vender(sillon);
     System.out.println("Ventas del día: " + contador.cantidadDelDia());
 
